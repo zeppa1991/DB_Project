@@ -1,0 +1,14 @@
+Tabellen:
+-Asset
+-Employee (Persönliche Daten)
+-Workplace
+-Assetmodel (Modelle von Geräten, wie z.B. Dell XYZ)
+-Asset Maintenance (Hardware)
+-Software Changelog (Softwareaenderung)
+-Software
+-Software Association (Welcher MA und Asset hat welche Software zugeordnet)
+
+
+Tabelle Asset:
+-AssetNr. (PrimaryKey)
+-
