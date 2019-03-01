@@ -17,11 +17,9 @@ CREATE TABLE manufacturer (
 );
 
 CREATE TABLE types (
-    id INT NOT NULL,
-    parent_id INT NOT NULL,
+    id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(30) NOT NULL,
-    PRIMARY KEY (id),
-    FOREIGN KEY (parent_id) REFERENCES types(id)
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE asset (
@@ -30,28 +28,25 @@ CREATE TABLE asset (
     purchaseDate DATE NOT NULL,
     product_id INT NOT NULL,
     workplace_id INT NOT NULL,
-    employee_id INT NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE software (
     id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(45) NOT NULL,
+    serial_number varchar(11) not null,
     Version VARCHAR(5) NOT NULL,
+    product_id INT NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE softwarecatalogue (
-    id INT NOT NULL AUTO_INCREMENT,
     serial_number INT NOT NULL,
-    software_id INT NOT NULL,
-    PRIMARY KEY (id)
+    software_id INT NOT NULL
 );
 
 CREATE TABLE workplace (
     id INT NOT NULL AUTO_INCREMENT,
-    employee_id INT NOT NULL,
-    department_id INT NOT NULL,
+	department_id INT NOT NULL,
     PRIMARY KEY (id)
     
 );
@@ -69,24 +64,22 @@ CREATE TABLE employee (
     birthdate DATE NOT NULL,
     sex INT NOT NULL,
     address_id INT NOT NULL,
-    department_id INT NOT NULL,
+	workplace_id INT NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE sex (
     id INT NOT NULL AUTO_INCREMENT,
-    parent_id INT NOT NULL,
     name VARCHAR(30) NOT NULL,
-    FOREIGN KEY (parent_id) REFERENCES sex(id),
     PRIMARY KEY (id)
 );
 
 CREATE TABLE address (
     id INT NOT NULL AUTO_INCREMENT,
-    street VARCHAR(100),
-    street_nr INT(5),
-    zip_code INT(5),
-    city VARCHAR(45),
+    street VARCHAR(100) NOT NULL,
+    street_nr INT(5) NOT NULL,
+    zip_code INT(5) NOT NULL,
+    city VARCHAR(45) NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -94,64 +87,115 @@ ALTER TABLE product ADD FOREIGN KEY (manufacturer) REFERENCES manufacturer(id);
 ALTER TABLE product ADD FOREIGN KEY (type) REFERENCES types(id);
 ALTER TABLE asset ADD FOREIGN KEY (product_id) REFERENCES product(id);
 ALTER TABLE asset ADD FOREIGN KEY (workplace_id) REFERENCES workplace(id);
+ALTER TABLE software ADD FOREIGN KEY (product_id) REFERENCES product(id);
+ALTER TABLE softwarecatalogue ADD constraint primary key (serial_number,software_id);
+ALTER TABLE softwarecatalogue ADD FOREIGN KEY (serial_number) REFERENCES asset(id);
 ALTER TABLE softwarecatalogue ADD FOREIGN KEY (software_id) REFERENCES software(id);
-ALTER TABLE workplace ADD FOREIGN KEY (employee_id) REFERENCES employee(id);
-ALTER TABLE workplace ADD FOREIGN KEY (department_id) REFERENCES department(id);
+ALTER TABLE employee ADD FOREIGN KEY (workplace_id) REFERENCES workplace(id);
 ALTER TABLE employee ADD FOREIGN KEY (sex) REFERENCES sex(id);
 ALTER TABLE employee ADD FOREIGN KEY (address_id) REFERENCES address(id);
-ALTER TABLE employee ADD FOREIGN KEY (department_id) REFERENCES department(id);
+ALTER TABLE workplace ADD FOREIGN KEY (department_id) REFERENCES department(id);
 
-LOAD DATA INFILE 'C:/csv/addresses.csv'
-INTO TABLE address
-FIELDS TERMINATED BY ','
-LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/csv/types.csv'
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/types.csv'
 INTO TABLE types
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/csv/departments.csv'
-INTO TABLE department
-FIELDS TERMINATED BY ','
-LINES TERMINATED BY '\n';
-
-LOAD DATA INFILE 'C:/csv/manufacturers.csv'
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/manufacturers.csv'
 INTO TABLE manufacturer
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/csv/sexes.csv'
-INTO TABLE sex
-FIELDS TERMINATED BY ','
-LINES TERMINATED BY '\n';
-
-LOAD DATA INFILE 'C:/csv/software.csv'
-INTO TABLE software
-FIELDS TERMINATED BY ','
-LINES TERMINATED BY '\n';
-
-LOAD DATA INFILE 'C:/csv/softwarecatalogue.csv'
-INTO TABLE softwarecatalogue
-FIELDS TERMINATED BY ','
-LINES TERMINATED BY '\n';
-
-LOAD DATA INFILE 'C:/csv/employees.csv'
-INTO TABLE employee
-FIELDS TERMINATED BY ','
-LINES TERMINATED BY '\n';
-
-LOAD DATA INFILE 'C:/csv/workplaces.csv'
-INTO TABLE workplace
-FIELDS TERMINATED BY ','
-LINES TERMINATED BY '\n';
-
-LOAD DATA INFILE 'C:/csv/products.csv'
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/products.csv'
 INTO TABLE product
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/csv/assets.csv'
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/software.csv'
+INTO TABLE software
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/addresses.csv'
+INTO TABLE address
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/departments.csv'
+INTO TABLE department
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/workplaces.csv'
+INTO TABLE workplace
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/sexes.csv'
+INTO TABLE sex
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/employees.csv'
+INTO TABLE employee
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/assets.csv'
 INTO TABLE asset
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
+
+LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/softwarecatalogue.csv'
+INTO TABLE softwarecatalogue
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n';
+
+/*View 1*/
+create view Hardware_List as
+select manufacturer.name as 'Hersteller', product.model_name as 'Modellname', asset.serialnumber as 'Serialnumber' from product
+join manufacturer on manufacturer.id
+join asset on asset.id
+where product.id = asset.product_id and product.manufacturer = manufacturer.id;
+
+/*View 2*/
+create view Employee_Hardware_List as
+select employee.firstname as 'Firstname', employee.lastname as 'Lastname', asset.serialnumber as 'Seriennummer', product.model_name as 'Modell' from asset
+join product on product.id
+join workplace on workplace.id
+join employee on employee.id
+where asset.product_id = product.id and asset.workplace_id = workplace.id and employee.workplace_id = workplace.id;
+
+/*View 3*/
+create view Departement_Employee_List as
+select department.name as 'Department', employee.firstname as 'Firstname', employee.lastname as 'Lastname', workplace.id as 'Büro', asset.serialnumber as 'Asset', product.model_name as 'Modell' from employee
+join workplace on workplace.id
+join department on department.id
+join asset on asset.id
+join product on product.id
+where employee.workplace_id = workplace.id and workplace.department_id = department.id and asset.workplace_id = workplace.id and asset.product_id = product.id;
+
+/*View 4*/
+create view Most_Used_Software as
+select department.name as 'Department', product.model_name as 'Software Name', count(product.id) as 'Anzahl' from department
+join workplace on workplace.id
+join asset on asset.id
+join softwarecatalogue on softwarecatalogue.serial_number
+join software on software.id
+join product on product.id
+where department.id = workplace.department_id 
+and asset.workplace_id = workplace.id 
+and asset.id = softwarecatalogue.serial_number 
+and softwarecatalogue.software_id = software.id
+and software.product_id = product.id
+group by department.name;
+
+select * from hardware_list;
+
+select * from employee_hardware_list
+where employee_hardware_list.Lastname = "Muster";
+
+select * from departement_employee_list where departement_employee_list.Department = 'HR';
+
+select * from most_used_software where most_used_software.Department = 'HR';
