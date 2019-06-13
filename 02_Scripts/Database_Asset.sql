@@ -96,58 +96,58 @@ ALTER TABLE employee ADD FOREIGN KEY (sex) REFERENCES sex(id);
 ALTER TABLE employee ADD FOREIGN KEY (address_id) REFERENCES address(id);
 ALTER TABLE workplace ADD FOREIGN KEY (department_id) REFERENCES department(id);
 
-
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/types.csv'
+/*Insert Data*/
+LOAD DATA INFILE 'C:/CSV/types.csv'
 INTO TABLE types
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/manufacturers.csv'
+LOAD DATA INFILE 'C:/CSV/manufacturers.csv'
 INTO TABLE manufacturer
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/products.csv'
+LOAD DATA INFILE 'C:/CSV/products.csv'
 INTO TABLE product
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/software.csv'
+LOAD DATA INFILE 'C:/CSV/software.csv'
 INTO TABLE software
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/addresses.csv'
+LOAD DATA INFILE 'C:/CSV/addresses.csv'
 INTO TABLE address
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/departments.csv'
+LOAD DATA INFILE 'C:/CSV/departments.csv'
 INTO TABLE department
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/workplaces.csv'
+LOAD DATA INFILE 'C:/CSV/workplaces.csv'
 INTO TABLE workplace
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/sexes.csv'
+LOAD DATA INFILE 'C:/CSV/sexes.csv'
 INTO TABLE sex
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/employees.csv'
+LOAD DATA INFILE 'C:/CSV/employees.csv'
 INTO TABLE employee
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/assets.csv'
+LOAD DATA INFILE 'C:/CSV/assets.csv'
 INTO TABLE asset
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
 
-LOAD DATA INFILE 'C:/Users/i02401202/Downloads/DB_Project-master/03_Data/softwarecatalogue.csv'
+LOAD DATA INFILE 'C:/CSV/softwarecatalogue.csv'
 INTO TABLE softwarecatalogue
 FIELDS TERMINATED BY ','
 LINES TERMINATED BY '\n';
@@ -199,3 +199,151 @@ where employee_hardware_list.Lastname = "Muster";
 select * from departement_employee_list where departement_employee_list.Department = 'HR';
 
 select * from most_used_software where most_used_software.Department = 'HR';
+
+/*create user*/
+DROP USER IF EXISTS hr@’localhost’;
+create user hr@’localhost’ identified by '123';
+grant all privileges on employee to hr@’localhost’;
+grant all privileges on address to hr@’localhost’;
+grant all privileges on sex to hr@’localhost’;
+grant all privileges on department to hr@’localhost’;
+grant all privileges on workplace to hr@’localhost’;
+
+DROP USER IF EXISTS sw@’localhost’;
+create user sw@’localhost’ identified by '123';
+grant all privileges on software to sw@’localhost’;
+grant all privileges on softwarecatalogue to sw@’localhost’;
+grant all privileges on product to sw@’localhost’;
+grant all privileges on asset to sw@’localhost’;
+grant all privileges on assetmgmt.types to sw@’localhost’;
+grant SELECT on workplace to sw@’localhost’;
+grant SELECT on department to sw@’localhost’;
+grant SELECT on employee to sw@’localhost’;
+
+DROP USER IF EXISTS hm@’localhost’;
+create user hm@’localhost’ identified by '123';
+grant all privileges on product to hm@’localhost’;
+grant all privileges on asset to hm@’localhost’;
+grant all privileges on manufacturer to hm@’localhost’;
+grant all privileges on assetmgmt.types to hm@’localhost’;
+grant SELECT on workplace to hm@’localhost’;
+grant SELECT on department to hm@’localhost’;
+grant SELECT on employee to hm@’localhost’;
+
+DROP USER IF EXISTS guest@’localhost’;
+create user guest@’localhost’ identified by '123';
+grant SELECT on employee to guest@’localhost’;
+grant SELECT on workplace to guest@’localhost’;
+
+/*Transaktion weisst neuen Arbeitsplatz zu welcher noch nicht besetzt ist. Es könnte sein das zwei hr user den neuen Mitarbeiter anlegen wollen.*/
+start transaction;
+select * from employee;
+
+select @emptyWorkplace := w.id from workplace as w
+join employee as e on w.id <> e.workplace_id
+group by e.id limit 1;
+
+insert into employee (firstname, lastname,birthdate,sex,address_id,workplace_id)
+values ('Kevin','Meier','1980.03.01',1,1,@emptyWorkplace);
+commit;
+
+DROP procedure IF EXISTS `newEmployee`; 
+DELIMITER // 
+CREATE PROCEDURE newEmployee(
+Firstname varchar (45),
+Lastname varchar (45),
+Sex int,
+Birthday date,
+Street varchar(100),
+HouseNr int,
+PLZ int,
+City varchar(45)) 
+BEGIN 
+	insert into address (street,street_nr,zip_code,city)
+    values (Street,HouseNr,PLZ,City);
+    select a.id from address as a
+    where a.street = Street AND a.zip_code = PLZ;
+    END// 
+    DELIMITER ;
+
+/*Stored Procedure 1 Neuer Mitarbeiter*/
+DROP procedure IF EXISTS `newEmployee`; 
+DELIMITER // 
+CREATE PROCEDURE newEmployee(
+Firstname varchar (45),
+Lastname varchar (45),
+Sex varchar(15),
+Birthday date,
+Street varchar(100),
+HouseNr int,
+PLZ int,
+City varchar(45)) 
+BEGIN 
+   
+	insert into address (street,street_nr,zip_code,city)
+    values (Street,HouseNr,PLZ,City);
+    
+    select @adressID := a.id from address as a
+    where a.street = Street AND a.zip_code = PLZ
+    Limit 1;
+    
+    select @sexID := s.id from sex as s
+    where s.name = Sex;
+    
+    select @workplace_id := w.id from workplace as w
+	join employee as e on w.id <> e.workplace_id	
+	group by e.id limit 1;
+    
+    insert into employee (firstname,lastname,birthdate,sex,address_id,workplace_id)
+    values (Firstname,Lastname,Birthday,@sexID,@adressID,@workplace_id);
+    END// 
+    DELIMITER ;
+
+call newEmployee("Oliver","Czabala","Male","2019.04.05","OliStrasse",50,1456,"testcity");
+select * from employee;
+
+/*Stored Procedure 2 neues Asset*/
+DROP procedure IF EXISTS `newAsset`; 
+DELIMITER // 
+CREATE PROCEDURE newAsset(
+Firstname varchar (45),
+Lastname varchar (45),
+Serialnumber int(11),
+BuyDate date,
+ModellName varchar(45)) 
+BEGIN 
+    
+    select @productID := p.id from product as p
+    where p.model_name = ModellName;
+    
+    select @workplaceID := e.workplace_id from employee as e
+    where e.firstname = Firstname AND e.lastname = Lastname;
+    
+    insert into asset (serialnumber,purchaseDate,product_id,workplace_id)
+    values (Serialnumber,BuyDate,@productID,@workplaceID);
+    END// 
+    DELIMITER ;
+
+call newAsset("Oliver","Czabala",555666777,"2019.06.13","Word");
+select * from asset;
+
+/*Stored Procedure 3 neuem Mitarbeiter Hr rechte geben*/
+DROP procedure IF EXISTS `newHRRight`; 
+DELIMITER // 
+CREATE PROCEDURE newHRRight(
+username varchar(45)) 
+BEGIN 
+	set @test = username;
+	DROP USER IF EXISTS test@’localhost’;
+	create user test@’localhost’ identified by '123';
+	grant all privileges on employee to test@’localhost’;
+	grant all privileges on address to test@’localhost’;
+	grant all privileges on sex to test@’localhost’;
+	grant all privileges on department to test@’localhost’;
+	grant all privileges on workplace to test@’localhost’;
+	
+    select "HR right granted.";
+    END// 
+    DELIMITER ;
+call newHRRight('oliver');
+SELECT user FROM mysql.user;
